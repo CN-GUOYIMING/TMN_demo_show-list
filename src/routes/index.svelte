@@ -1,32 +1,95 @@
 <script>
   // Dependencies
+  import { onMount } from 'svelte';
+  // Components
   import Pagination from '../components/Pagination.svelte';
 
+  // Const
   const DEFAULT_PAGE = 1; // デフォルトに表示されるページ番号
+  const ONE_PAGE_LINES = 2; // 一ページに表示される件数
 
-  const dummyOrignalDate = [
-    {code: 'P0001', name: '果物', flag: '食品'}, 
-    {code: 'P0002', name: '野菜', flag: '食品'}, 
-    {code: 'P0003', name: 'お肉', flag: '食品'}
-  ];
+  let dataList = [];
+  let currentPage = DEFAULT_PAGE;
+  $: pageSlices = filterData(dataList, { codeRange, targetFlag });
+  let codeRange = { begin: '', end: '' }
+  let targetFlag = '';
 
-    const pageSlices = [];
-    let currentPage = DEFAULT_PAGE;
+  onMount(async () => {
+    try {
+      // NOTE: 初期データを取得する API はここでコール。
+      let dummyData = [
+        {code: 'P0001', name: '果物', flag: '常温'}, 
+        {code: 'P0002', name: '野菜', flag: '常温'}, 
+        {code: 'P0003', name: '豚肉', flag: '冷凍'},
+        {code: 'P0004', name: '魚肉', flag: '冷凍'},
+        {code: 'P0005', name: '牛肉', flag: '冷凍'},
+        {code: 'P0006', name: '鶏肉', flag: '冷凍'}
+      ]
+  
+      dataList = dummyData;
+    } catch (error) {
+      console.log(error);
+    }
+  });
 
-    const addPageSlice = () => {
-      const onePageLines = 2;
-      const pageNumbers = Math.ceil(dummyOrignalDate.length / onePageLines)
+  /** Functions*/
+  /**
+   * データを濾過する。
+   * @param orignalData
+   * @param filterTerms
+   * 
+   * @returns {Array}
+   */
+  const filterData = (orignalData, { codeRange, targetFlag }) => {
+    let slices = [];
+    let temporary = orignalData;
 
-      for ( let times = 1; times <= pageNumbers; times++ ) {
-        const startIndex = (times - 1) * onePageLines;
-        const endIndex = startIndex + onePageLines;
+    temporary = filterDataByCode(temporary, codeRange);
+    temporary = filterDataByFlag(temporary, targetFlag);
+    slices = slicePage(temporary);
+    
+    return slices;
+  };
 
-        pageSlices.push(dummyOrignalDate.slice(startIndex, endIndex));
-      }
+  const filterDataByCode = (
+    data, codeRange = { begin: null, end: null }
+  ) => {
+    if (!codeRange.begin && !codeRange.end) return data;
+
+    // NOTE: コードに応じて比較方法が変わることがある。
+    return data.filter(
+      item => codeRange.begin <= item.code && item.code <=codeRange.end
+    )
+  };
+
+  const filterDataByFlag = (data, flag) => {
+    if (!flag) return data;
+    return data.filter(item => item.flag.includes(flag));
+  };
+
+  const slicePage = (data) => {
+    let slices = [];
+
+    // 総データの件数をページ毎の表示件数で割ってページ数を取得
+    const pageNumbers = data.length 
+      ? Math.ceil(data.length / ONE_PAGE_LINES)
+      : DEFAULT_PAGE
+    
+    // ページ数を回数にループを行い、ページ毎の表示データを切り分ける
+    for ( let times = 1; times <= pageNumbers; times++ ) {
+      const startIndex = (times - 1) * ONE_PAGE_LINES;
+      const endIndex = startIndex + ONE_PAGE_LINES;
+
+      slices = [...slices, data.slice(startIndex, endIndex)];
     }
 
-    addPageSlice();
+    return slices;
+  }
 
+  const updateData = () => {
+    // NOTE: 更新 API はここでコール。
+    console.log(dataList);
+  };
 </script>
 
 <svelte:head>
@@ -40,9 +103,9 @@
       <div class="filter_title">大分類コード</div>
       
       <div class="filter_contents_container">
-        <input type="text">
+        <input type="text" bind:value={codeRange.begin}>
         <span class="wave">~</span>
-        <input type="text">
+        <input type="text" bind:value={codeRange.end}>
       </div>   
     </div>
 
@@ -50,7 +113,7 @@
       <div class="filter_title">〇〇フラグ</div>
       
       <div class="filter_contents_container">
-        <input type="text">
+        <input type="text" bind:value={targetFlag}>
       </div>
     </div>
   </article>
@@ -77,10 +140,13 @@
   </article>
 
   <!-- ページ -->
-  <Pagination pageNumbers={2} bind:currentPage={currentPage} />
+  <Pagination 
+    pageNumbers={pageSlices.length} 
+    bind:currentPage={currentPage} 
+  />
 
   <!-- 保存ボタン -->
-  <button type="button" on:click={() => console.log(currentPage)}>保存</button>
+  <button type="button" on:click={() => updateData()}>保存</button>
 </main>
 
 <style>
