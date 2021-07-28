@@ -1,3 +1,19 @@
+<!-- 先読み -->
+<script context="module">
+  export async function preload(page, session) {
+    try {
+      // NOTE: 初期データを取得する API はここでコール。
+      const result = await this.fetch('/data.json');
+      const dataList = await result.json();
+
+      return { dataList };
+    }
+    catch (error) {
+      console.log(error);
+    }
+  }
+</script>
+
 <script>
   // Dependencies
   import { onMount } from 'svelte';
@@ -6,31 +22,25 @@
 
   // Const
   const DEFAULT_PAGE = 1; // デフォルトに表示されるページ番号
-  const ONE_PAGE_LINES = 2; // 一ページに表示される件数
+  const ONE_PAGE_LINES = 4; // 一ページに表示される件数
 
-  let dataList = [];
+  export let dataList;
+  // let dataList = []; // onMount 用
+
   let currentPage = DEFAULT_PAGE;
   $: pageSlices = filterData(dataList, { codeRange, targetFlag });
   let codeRange = { begin: '', end: '' }
   let targetFlag = '';
 
-  onMount(async () => {
-    try {
-      // NOTE: 初期データを取得する API はここでコール。
-      let dummyData = [
-        {code: 'P0001', name: '果物', flag: '常温'}, 
-        {code: 'P0002', name: '野菜', flag: '常温'}, 
-        {code: 'P0003', name: '豚肉', flag: '冷凍'},
-        {code: 'P0004', name: '魚肉', flag: '冷凍'},
-        {code: 'P0005', name: '牛肉', flag: '冷凍'},
-        {code: 'P0006', name: '鶏肉', flag: '冷凍'}
-      ]
-  
-      dataList = dummyData;
-    } catch (error) {
-      console.log(error);
-    }
-  });
+  // onMount(async () => {
+  //   try {
+  //     // NOTE: 初期データを取得する API はここでコール。
+  //     const result = await fetch('/data.json');
+  //     dataList = await result.json();
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // });
 
   /** Functions*/
   /**
