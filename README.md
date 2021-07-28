@@ -4,7 +4,7 @@
 
 - [svelte document (CN)](https://www.sveltejs.cn/)
 - [sapper document (CN)](https://www.sapperjs.com/)
-- [sapper 解説動画](https://www.youtube.com/playlist?list=PL4cUxeGkcC9gdr4Qhx83gBBcID-KMe-PQ)
+- [sapper 解説動画（EN）](https://www.youtube.com/playlist?list=PL4cUxeGkcC9gdr4Qhx83gBBcID-KMe-PQ)
 
 ---
 
@@ -20,8 +20,8 @@ npm run dev
 
 ---
 
-## トップページのファイル
+## ページファイル
 
-- src/routes/index.svelte
+- トップページ：`src/routes/index.svelte`
 
 ---
