@@ -20,7 +20,7 @@
   const DEFAULT_PAGE = 1; // デフォルトに表示されるページ番号
   const ONE_PAGE_LINES = 4; // 一ページに表示される件数
 
-  export let dataList;
+  export let dataList; // module 用
   // let dataList = []; // onMount 用
 
   let currentPage = DEFAULT_PAGE;
@@ -30,7 +30,7 @@
 
   // onMount(async () => {
   //   // NOTE: 初期データを取得する API はここでコール。
-  //   const response = await fetch('/data.json');
+  //   const response = await fetch('/index.json');
   //   dataList = await response.json();
   // });
 
