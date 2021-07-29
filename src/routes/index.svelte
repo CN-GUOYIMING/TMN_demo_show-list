@@ -1,16 +1,12 @@
 <!-- 先読み -->
 <script context="module">
   export async function preload(page, session) {
-    try {
-      // NOTE: 初期データを取得する API はここでコール。
-      const result = await this.fetch('/data.json');
-      const dataList = await result.json();
+    // NOTE: 初期データを取得する API はここでコール。
+    // const response = await this.fetch('/data.json'); // static から取得
+    const response = await this.fetch('/index.json'); // index.json.js から取得
+    const dataList = await response.json();
 
-      return { dataList };
-    }
-    catch (error) {
-      console.log(error);
-    }
+    return { dataList };
   }
 </script>
 
@@ -29,17 +25,13 @@
 
   let currentPage = DEFAULT_PAGE;
   $: pageSlices = filterData(dataList, { codeRange, targetFlag });
-  let codeRange = { begin: '', end: '' }
+  let codeRange = {}
   let targetFlag = '';
 
   // onMount(async () => {
-  //   try {
-  //     // NOTE: 初期データを取得する API はここでコール。
-  //     const result = await fetch('/data.json');
-  //     dataList = await result.json();
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
+  //   // NOTE: 初期データを取得する API はここでコール。
+  //   const response = await fetch('/data.json');
+  //   dataList = await response.json();
   // });
 
   /** Functions*/
@@ -62,13 +54,23 @@
   };
 
   const filterDataByCode = (
-    data, codeRange = { begin: null, end: null }
+    data, codeRange = { begin: '', end: '' }
   ) => {
-    if (!codeRange.begin && !codeRange.end) return data;
+    if (!codeRange.begin || !codeRange.end) return data;
 
     // NOTE: コードに応じて比較方法が変わることがある。
     return data.filter(
-      item => codeRange.begin <= item.code && item.code <=codeRange.end
+      item => {
+        const begin = codeRange.begin?.toUpperCase();
+        const end = codeRange.end?.toUpperCase();
+
+        if (
+          begin.length !== item.code.length || 
+          end.length !== item.code.length
+        ) return;
+
+        return begin <= item.code && item.code <=end
+      }
     )
   };
 
@@ -96,8 +98,22 @@
     return slices;
   }
 
-  const updateData = () => {
+  const clearTerms = () => {
+    codeRange = {};
+    targetFlag = '';
+  };
+
+  const updateData = async () => {
     // NOTE: 更新 API はここでコール。
+    const response = await fetch('/index.json', {
+      method: 'post',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify(dataList)
+    });
+
+    const updatedData = await response.json();
+
+    // console.log(updatedData);
     console.log(dataList);
   };
 </script>
@@ -108,71 +124,98 @@
 
 <main>
   <!-- フィルター -->
-  <article class="filter_container">
-    <div class="filter_code_container">
-      <div class="filter_title">大分類コード</div>
-      
-      <div class="filter_contents_container">
-        <input type="text" bind:value={codeRange.begin}>
-        <span class="wave">~</span>
-        <input type="text" bind:value={codeRange.end}>
-      </div>   
-    </div>
-
-    <div class="filter_flag_container">
-      <div class="filter_title">〇〇フラグ</div>
-      
-      <div class="filter_contents_container">
-        <input type="text" bind:value={targetFlag}>
+  <section class="content-box">
+    <div class="label-title">検索条件</div>
+    
+    <article class="filter_container">
+      <div class="filter_code_container">
+        <div class="filter_title">大分類コード</div>
+        
+        <div class="filter_contents_container">
+          <input type="text" bind:value={codeRange.begin}>
+          <span class="wave">~</span>
+          <input type="text" bind:value={codeRange.end}>
+        </div>   
       </div>
-    </div>
-  </article>
+
+      <div class="filter_flag_container">
+        <div class="filter_title">〇〇フラグ</div>
+        
+        <div class="filter_contents_container">
+          <input type="text" bind:value={targetFlag}>
+        </div>
+      </div>
+    </article>
+  </section>
 
   <!-- 表示リスト -->
-  <article class="table_container">
-    <div class="table_header_container">
-      <div class="ceil_header">大分類コード</div>
-      <div class="ceil_header">大分類名</div>
-      <div class="ceil_header ceil_end">〇〇フラグ</div>
-    </div>
+  <section class="content-box" style="margin-top: 30px;">
+    <div class="label-title">表示リスト</div>
 
-    <div class="table_items_container">
-      {#each pageSlices[currentPage - 1] as item, index(item.code)}
-        <div class="table_item_container">
-          <div class="ceil_item">{item.code}</div>
-          <div class="ceil_item">{item.name}</div>
-          <div class="ceil_item ceil_end">
-            <input type="text" bind:value={item.flag}>
+    <article class="table_container">
+      <div class="table_header_container">
+        <div class="ceil_header">大分類コード</div>
+        <div class="ceil_header">大分類名</div>
+        <div class="ceil_header ceil_end">〇〇フラグ</div>
+      </div>
+
+      <div class="table_items_container">
+        {#each pageSlices[currentPage - 1] as item, index(item.code)}
+          <div class="table_item_container">
+            <div class="ceil_item">{item.code}</div>
+            <div class="ceil_item">{item.name}</div>
+            
+            <div class="ceil_item ceil_end">
+              <input type="text" bind:value={item.flag}>
+            </div>
           </div>
-        </div>
-      {/each}
-    </div>
-  </article>
+        {/each}
+      </div>
+    </article>
+  </section>
 
-  <!-- ページ -->
+  <!-- ページ切り替え -->
   <Pagination 
     pageNumbers={pageSlices.length} 
-    bind:currentPage={currentPage} 
+    bind:currentPage
+    style={"margin-top: 30px;"}
   />
 
-  <!-- 保存ボタン -->
-  <button type="button" on:click={() => updateData()}>保存</button>
+  <!-- ボタン -->
+  <div class="button_container">
+    <button type="button" on:click={() => clearTerms()}>クリア</button>
+    <button type="button" on:click={updateData}>保存</button>
+  </div>
 </main>
 
 <style>
+  .content-box {
+    border-radius: 2px;
+    box-shadow: 1px 1px 6px;
+  }
+
+  .label-title {
+    background-color: #f76cadcc;
+    color: #fff;
+    font-weight: 400;
+    padding: 5px 20px;
+  }
+
   main {
     display: flex;
     flex-direction: column;
-    margin: auto;
-    width: 450px;
+    font-size: 14px;
+    margin: 70px auto;
+    width: 600px;
   }
   .filter_container {
+    background-color: #f76cad33;
     display: flex;
     flex-direction: column;
+    padding: 10px 20px;
   }
   .filter_code_container {
     display: flex;
-    margin-top: 50px;
   }
   .filter_flag_container {
     display: flex;
@@ -193,7 +236,8 @@
     margin: 0 20px;
   }
   .table_container {
-    margin-top: 20px;
+    background-color: #f76cad33;
+    padding: 10px;
   }
   .table_header_container {
     display: flex;
@@ -221,10 +265,24 @@
     border-right: 1px;
     border-style: solid;
   }
-  button {
+  .button_container {
     align-self: center;
     display: flex;
-    margin-top: 20px;
-    padding: 1px 20px;
+    justify-content: space-around;
+    width: 45%;
+  }
+  button {
+    align-self: center;
+    background-color: #f76cad66;
+    border: 0;
+    border-radius: 5px;
+    color: #000;
+    cursor: pointer;
+    display: flex;
+    font-family: 600px;
+    justify-content: center;
+    margin-top: 30px;
+    padding: 6px 20px;
+    width: 100px;
   }
 </style>

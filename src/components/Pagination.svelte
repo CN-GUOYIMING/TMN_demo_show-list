@@ -3,9 +3,10 @@
 
   export let pageNumbers;
   export let currentPage = DEFAULT_PAGE;
+  export let style;
 </script>
 
-<article class="main-container">
+<article class="main-container" {style}>
   <button 
     type="button" 
     on:click={
@@ -40,9 +41,16 @@
   .current-page {
     border-bottom: 1px solid orangered;
     cursor: pointer;
-    margin: 0 20px;
+    margin: 0 30px;
   }
   button {
+    align-items: center;
+    background-color: #f76cad66;
+    border: 0;
+    border-radius: 5px;
     cursor: pointer;
+    display: flex;
+    justify-content: center;
+    width: 40px;
   }
 </style>
